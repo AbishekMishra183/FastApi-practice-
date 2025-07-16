@@ -1,71 +1,31 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
-import joblib 
+import joblib
 import numpy as np
-app=FastAPI() 
-model=joblib.load('Saved/DecisionTreePrediction.pkl')
 
+app = FastAPI()
+model = joblib.load('Saved/DecisionTreePrediction.pkl')
 
-#GUlcose
- #Bloddpresure
- #dfp
-#age
+templates = Jinja2Templates(directory="templates")
+
 class Patient(BaseModel):
-    gulcose:float
-    bloodpressure:int
-    dfp:float
-    age:int
+    gulcose: float
+    bloodpressure: int
+    dfp: float
+    age: int
 
-@app.get('/')         # @ is used to make the route
+@app.get("/", response_class=HTMLResponse)
+def read_root(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
 
-def show():
-    return{'message:','Hello guys'}
-
-@app.get('about')
+@app.get("/about")
 def about():
-    return{'Display:','Broad AI is the educational sector'}
+    return {"Display": "Broad AI is the educational sector"}
 
-
-
-
-
-@app.post('/predict')
-async def predict(data:Patient):
-    input_data=np.array([[
-        data.gulcose,
-        data.bloodpressure,
-        data.dfp,
-        
-
-    ]])
-    predict=await model.predict(input_data)[0]
-    return{'prediction':int(predict)}
-
-
-    #GUlcose
-    #Bloddpresure
-    #dfp
-    #age
-
-
-
-
-
-
-
-
-
-'''
-to run this code we use the 
- in the cmd =>   uvicorn file name: app 
- uvicorn main:app --reload  
-
-
- to see the documentation 
-
-http://127.0.0.1:8000/docs in the url / docs is used 
-
-to give the data to the fastapi pydantic
-
-'''
-
+@app.post("/predict")
+async def predict(data: Patient):
+    input_data = np.array([[data.gulcose, data.bloodpressure, data.dfp, data.age]])
+    prediction = model.predict(input_data)[0]
+    return {"prediction": int(prediction)}
